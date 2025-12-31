@@ -224,9 +224,6 @@ async function book(id) {
   loadMyBookings();
 }
 
-/* =====================================================
-   BOOKINGS
-===================================================== */
 async function loadMyBookings() {
   const div = document.getElementById("myBookings");
   if (!div) return;
@@ -246,25 +243,74 @@ async function loadMyBookings() {
   }
 
   bookings.forEach(b => {
+    const isCancelled = b.status?.toUpperCase() === "CANCELLED";
+
+
     div.innerHTML += `
       <div class="col-md-4 mb-3">
         <div class="card p-3 shadow-sm rounded-4">
           <h6>${b.locationName}</h6>
-          <p class="text-muted small">${b.address}</p>
-          <p><b>Date:</b> ${b.bookingDate}<br>
-             <b>Time:</b> ${b.startTime} - ${b.endTime}</p>
 
-          ${
-            b.status === "Booked"
-              ? `<button class="btn btn-outline-primary btn-sm w-100"
-                   onclick="openTicket('${b._id}')">Generate Ticket</button>`
-              : `<span class="badge bg-secondary">Cancelled</span>`
-          }
+          <span class="badge ${isCancelled ? "bg-secondary" : "bg-success"} mb-2">
+            ${isCancelled ? "Cancelled" : "Booked"}
+          </span>
+
+          <p><b>Date:</b> ${b.bookingDate}</p>
+          <p><b>Time:</b> ${b.startTime} - ${b.endTime}</p>
+
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-outline-primary btn-sm w-50"
+              ${isCancelled ? "disabled" : ""}
+              onclick="openTicket('${b._id}')">
+              Generate Ticket
+            </button>
+
+            ${
+              !isCancelled
+                ? `<button class="btn btn-outline-danger btn-sm w-50"
+                    onclick="confirmCancel('${b._id}')">
+                    Cancel
+                  </button>`
+                : ""
+            }
+          </div>
         </div>
       </div>
     `;
   });
 }
+
+/* =====================================================
+   CONFIRM CANCEL
+===================================================== */
+function confirmCancel(id) {
+  if (confirm("Are you sure you want to cancel this booking?")) {
+    cancelBooking(id);
+  }
+}
+
+async function cancelBooking(id) {
+  const res = await fetch(`${API}/bookings/cancel/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getToken()
+    }
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Cancel failed:", data);
+    showToast("error", data.message || "Cancellation failed");
+    return;
+  }
+
+  showToast("success", "Booking cancelled");
+  loadLocations();
+  loadMyBookings();
+}
+
 
 /* =====================================================
    TICKET + QR
