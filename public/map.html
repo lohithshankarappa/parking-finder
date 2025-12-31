@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🚗 ParkEasy© - Our Locations</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100vh;
+    }
+
+    .sidebar {
+      padding: 16px;
+      border-right: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 8px;
+      color: #0d6efd;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: #555;
+    }
+
+    .location-list {
+      max-height: 65vh;
+      overflow-y: auto;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .location-list li {
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .location-list li:hover {
+      background: #f8f9ff;
+      border-color: #0d6efd;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .price {
+      color: #198754;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #0d6efd;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn.green {
+      background: #198754;
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h1>Parking Locations</h1>
+
+      <div class="top-controls">
+        <button class="btn" id="fitBtn">Fit All</button>
+        <button class="btn green" id="locateMe">My Location</button>
+      </div>
+
+      <p class="small">
+        Click a location to focus it on the map.
+      </p>
+
+      <ul id="list" class="location-list"></ul>
+    </aside>
+
+    <!-- MAP -->
+    <main id="map"></main>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    /* ---------------- MAP INIT ---------------- */
+    const map = L.map("map").setView([12.9716, 77.5946], 12);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const bounds = L.latLngBounds();
+
+    /* ---------------- ICON ---------------- */
+    const markerIcon = new L.Icon({
+      iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -28]
+    });
+
+    /* ---------------- HARD-CODED PLACES ---------------- */
+    const places = [
+      {
+        name: "Forum Mall Parking",
+        address: "Koramangala, Bengaluru",
+        price: 50,
+        lat: 12.9352,
+        lng: 77.6245
+      },
+      {
+        name: "MG Road Metro Parking",
+        address: "MG Road, Bengaluru",
+        price: 40,
+        lat: 12.9758,
+        lng: 77.6065
+      },
+      {
+        name: "Indiranagar Parking Zone",
+        address: "Indiranagar, Bengaluru",
+        price: 45,
+        lat: 12.9719,
+        lng: 77.6412
+      },
+      {
+        name: "Whitefield Tech Park Parking",
+        address: "Whitefield, Bengaluru",
+        price: 60,
+        lat: 12.9698,
+        lng: 77.7500
+      },
+      {
+        name: "Majestic Bus Stand Parking",
+        address: "Majestic, Bengaluru",
+        price: 30,
+        lat: 12.9763,
+        lng: 77.5713
+      }
+    ];
+
+    /* ---------------- SIDEBAR + MARKERS ---------------- */
+    const listEl = document.getElementById("list");
+
+    places.forEach(place => {
+      const marker = L.marker([place.lat, place.lng], {
+        icon: markerIcon
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <strong>${place.name}</strong><br>
+        ${place.address}<br>
+        <span class="price">₹${place.price} / hr</span>
+      `);
+
+      bounds.extend([place.lat, place.lng]);
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${place.name}</strong>
+        <div class="small">${place.address}</div>
+        <div class="price">₹${place.price} / hr</div>
+      `;
+
+      li.onclick = () => {
+        map.setView([place.lat, place.lng], 15);
+        marker.openPopup();
+      };
+
+      listEl.appendChild(li);
+    });
+
+    map.fitBounds(bounds);
+
+    /* ---------------- CONTROLS ---------------- */
+    document.getElementById("fitBtn").onclick = () => {
+      map.fitBounds(bounds);
+    };
+
+    document.getElementById("locateMe").onclick = () => {
+      if (!navigator.geolocation) {
+        alert("Geolocation not supported");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+
+        L.marker([latitude, longitude])
+          .addTo(map)
+          .bindPopup("You are here")
+          .openPopup();
+
+        map.setView([latitude, longitude], 15);
+      });
+    };
+  </script>
+</body>
+</html>
