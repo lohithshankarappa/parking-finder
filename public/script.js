@@ -161,25 +161,24 @@ async function loadLocations() {
           <p><b>${l.availableSlots}</b> / ${l.totalSlots} slots</p>
 
           <input type="date" id="date-${l._id}" class="form-control mb-2">
-          <label class="small fw-semibold text-secondary d-flex align-items-center gap-1">
-            <i class="bi bi-clock"></i> Start Time
-          </label>
-          <input
-            type="time"
-            id="start-${l._id}"
-            class="form-control mb-3"
-          >
 
-          <label class="small fw-semibold text-secondary d-flex align-items-center gap-1">
-            <i class="bi bi-clock-history"></i> End Time
-          </label>
-          <input
-            type="time"
-            id="end-${l._id}"
-            class="form-control mb-3"
-          >
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="small fw-semibold">Start Time</label>
+              <input type="time" id="start-${l._id}" class="form-control">
+            </div>
 
-
+            <div class="col-6">
+              <label class="small fw-semibold">Duration</label>
+              <select id="duration-${l._id}" class="form-select">
+                <option value="">Select</option>
+                <option value="1">1 Hour</option>
+                <option value="2">2 Hours</option>
+                <option value="3">3 Hours</option>
+                <option value="4">4 Hours</option>
+              </select>
+            </div>
+          </div>
 
           <button class="btn btn-primary btn-sm w-100"
             ${l.availableSlots === 0 ? "disabled" : ""}
@@ -190,6 +189,10 @@ async function loadLocations() {
       </div>
     `;
   });
+
+  /* Restrict booking date to today & future */
+  const today = new Date().toISOString().split("T")[0];
+  document.querySelectorAll("input[type='date']").forEach(d => d.min = today);
 }
 
 /* =====================================================
@@ -198,12 +201,35 @@ async function loadLocations() {
 async function book(id) {
   const bookingDate = document.getElementById(`date-${id}`).value;
   const startTime = document.getElementById(`start-${id}`).value;
-  const endTime = document.getElementById(`end-${id}`).value;
+  const duration = Number(document.getElementById(`duration-${id}`).value);
 
-  if (!bookingDate || !startTime || !endTime) {
-    showToast("error", "Select date and time");
+  if (!bookingDate || !startTime || !duration) {
+    showToast("error", "Select date, start time and duration");
     return;
   }
+
+  /* Prevent past time booking for today */
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+
+  if (bookingDate === today) {
+    const currentTime = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    if (startTime < currentTime) {
+      showToast("error", "You cannot book a past time");
+      return;
+    }
+  }
+
+  /* Auto-calculate end time */
+  const [h, m] = startTime.split(":").map(Number);
+  const endHour = h + duration;
+
+  if (endHour > 24) {
+    showToast("error", "Duration exceeds day limit");
+    return;
+  }
+
+  const endTime = `${String(endHour).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
 
   const res = await fetch(`${API}/locations/book/${id}`, {
     method: "POST",
@@ -224,6 +250,9 @@ async function book(id) {
   loadMyBookings();
 }
 
+/* =====================================================
+   MY BOOKINGS (UNCHANGED)
+===================================================== */
 async function loadMyBookings() {
   const div = document.getElementById("myBookings");
   if (!div) return;
@@ -245,16 +274,13 @@ async function loadMyBookings() {
   bookings.forEach(b => {
     const isCancelled = b.status?.toUpperCase() === "CANCELLED";
 
-
     div.innerHTML += `
       <div class="col-md-4 mb-3">
         <div class="card p-3 shadow-sm rounded-4">
           <h6>${b.locationName}</h6>
-
           <span class="badge ${isCancelled ? "bg-secondary" : "bg-success"} mb-2">
             ${isCancelled ? "Cancelled" : "Booked"}
           </span>
-
           <p><b>Date:</b> ${b.bookingDate}</p>
           <p><b>Time:</b> ${b.startTime} - ${b.endTime}</p>
 
@@ -268,9 +294,7 @@ async function loadMyBookings() {
             ${
               !isCancelled
                 ? `<button class="btn btn-outline-danger btn-sm w-50"
-                    onclick="confirmCancel('${b._id}')">
-                    Cancel
-                  </button>`
+                    onclick="confirmCancel('${b._id}')">Cancel</button>`
                 : ""
             }
           </div>

@@ -25,56 +25,61 @@ body {
   background: linear-gradient(120deg,#eef1f7,#f8f9fb);
   font-family: "Inter", system-ui, sans-serif;
   min-height: 100vh;
-  animation: pageFade .5s ease;
-}
-
-@keyframes pageFade {
-  from { opacity:0; transform:translateY(8px); }
-  to { opacity:1; transform:translateY(0); }
 }
 
 /* ================= NAVBAR ================= */
 .navbar {
   backdrop-filter: blur(16px);
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.9);
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-/* ================= LAYOUT FIX ================= */
+/* ================= LAYOUT ================= */
 .main-wrap {
   max-width: 1200px;
   margin: auto;
 }
 
-/* ================= CARDS ================= */
+/* ================= CARD BASE ================= */
 .card-box {
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(12px);
+  background: #ffffff;
   border-radius: 22px;
   padding: 2rem;
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-  animation: rise .5s ease;
 }
 
-@keyframes rise {
-  from { opacity:0; transform:translateY(12px); }
-  to { opacity:1; transform:translateY(0); }
-}
+/* ================= BLUE OUTLINE HOVER (NO FILL) ================= */
+/* Applies to Available slots, My bookings, Admin cards, Contact cards */
 
-/* ================= LOCATION CARDS ================= */
-.location-card {
-  transition: all .25s ease;
+#list .card,
+#myBookings .card,
+.location-card,
+.contact-card {
+  background: #ffffff;
   border-radius: 18px;
+  border: 1.5px solid rgba(0,0,0,0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
 }
 
-.location-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+/* Hover effect: outline + glow only */
+#list .card:hover,
+#myBookings .card:hover,
+.location-card:hover,
+.contact-card:hover {
+  transform: translateY(-5px);
+  border-color: #0d6efd;
+  box-shadow:
+    0 0 0 2px rgba(13,110,253,0.35),
+    0 14px 34px rgba(13,110,253,0.25);
 }
 
 /* ================= INPUTS ================= */
-.form-control {
+.form-control,
+.form-select {
   border-radius: 12px;
 }
 
@@ -90,73 +95,12 @@ body {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 12px 28px rgba(13,110,253,0.35);
-}
-
-
-/* ===== AVAILABLE PARKING: BLUE OUTLINE HOVER ===== */
-#list .card {
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.06);
-  transition: all .25s ease;
-}
-
-#list .card:hover {
-  transform: translateY(-6px);
-  border-color: #0d6efd;
   box-shadow:
-    0 0 0 2px rgba(13,110,253,0.35),
-    0 20px 45px rgba(13,110,253,0.25);
-}
-
-/* ===== MY BOOKINGS: SOFT BLUE OUTLINE ===== */
-#myBookings .card {
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.06);
-  transition: all .25s ease;
-}
-
-#myBookings .card:hover {
-  transform: translateY(-4px);
-  border-color: #0d6efd;
-  box-shadow:
-    0 0 0 1.5px rgba(13,110,253,0.25),
-    0 16px 36px rgba(0,0,0,0.18);
-}
-
-#list .btn-primary:hover {
-  box-shadow:
-    0 0 0 2px rgba(13,110,253,0.35),
+    0 0 0 2px rgba(13,110,253,0.3),
     0 10px 24px rgba(13,110,253,0.4);
 }
 
-/* ================= CONTACT SECTION ================= */
-#contact {
-  margin-top: 4rem;
-  margin-bottom: 4rem;
-}
-
-#contact h3 {
-  font-weight: 500;
-  color: #1f2937;
-}
-
-/* Contact cards */
-.contact-card {
-  transition: all .25s ease;
-  cursor: default;
-}
-
-.contact-card:hover {
-  transform: translateY(-4px);
-  border-color: #0d6efd;
-  box-shadow:
-    0 0 0 2px rgba(13,110,253,0.25),
-    0 18px 40px rgba(13,110,253,0.18);
-}
-
-
-/* ================= CONTACT ICON FIX ================= */
+/* ================= ICON BADGE ================= */
 .icon-badge {
   width: 48px;
   height: 48px;
@@ -165,27 +109,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   box-shadow:
     0 10px 20px rgba(37, 99, 235, 0.35),
     inset 0 1px 0 rgba(255,255,255,0.25);
-  transition: all 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .icon-badge i {
+  color: #fff;
   font-size: 18px;
-  color: #ffffff;
 }
 
-/* Hover effect */
 .contact-card:hover .icon-badge {
   transform: translateY(-2px) scale(1.05);
   box-shadow:
     0 14px 28px rgba(37, 99, 235, 0.45),
     inset 0 1px 0 rgba(255,255,255,0.35);
 }
-
-
 
 /* ================= QR ================= */
 #qrBox img {
@@ -198,13 +138,12 @@ body {
   animation: modalUp .25s ease;
 }
 
-
-
 @keyframes modalUp {
   from { opacity:0; transform:translateY(12px); }
   to { opacity:1; transform:translateY(0); }
 }
 </style>
+
 </head>
 
 <body onload="load()">

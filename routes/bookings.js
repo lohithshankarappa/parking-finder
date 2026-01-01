@@ -12,7 +12,6 @@ router.get("/my", auth, async (req, res) => {
     const bookings = await Booking.find({ userId: req.user.id })
       .sort({ createdAt: -1 });
 
-    // bookingNumber is INCLUDED but UI can hide it
     res.json(bookings);
   } catch (err) {
     console.error("Get bookings error:", err);
@@ -22,7 +21,6 @@ router.get("/my", auth, async (req, res) => {
 
 /* =======================
    GET BOOKING TICKET
-   (Used for popup + QR)
 ======================= */
 router.get("/ticket/:id", auth, async (req, res) => {
   try {
@@ -35,7 +33,6 @@ router.get("/ticket/:id", auth, async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // Send ONLY ticket-related data
     res.json({
       bookingNumber: booking.bookingNumber,
       locationName: booking.locationName,
@@ -53,7 +50,7 @@ router.get("/ticket/:id", auth, async (req, res) => {
 });
 
 /* =======================
-   CANCEL BOOKING
+   CANCEL BOOKING (FIXED)
 ======================= */
 router.put("/cancel/:id", auth, async (req, res) => {
   try {
@@ -64,14 +61,13 @@ router.put("/cancel/:id", auth, async (req, res) => {
 
     if (!booking) return res.sendStatus(404);
 
-    if (booking.status === "Cancelled") {
+    if (booking.status === "CANCELLED") {
       return res.status(400).json({ message: "Already cancelled" });
     }
 
-    booking.status = "Cancelled";
+    booking.status = "CANCELLED";
     await booking.save();
 
-    // Restore slot safely
     await Location.findByIdAndUpdate(
       booking.locationId,
       { $inc: { availableSlots: 1 } }
