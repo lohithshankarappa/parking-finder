@@ -273,23 +273,57 @@ async function loadMyBookings() {
 
   bookings.forEach(b => {
     const isCancelled = b.status?.toUpperCase() === "CANCELLED";
+    const now = new Date();
+    const bookingStart = new Date(`${b.bookingDate}T${b.startTime}`);
+    const bookingEnd = new Date(`${b.bookingDate}T${b.endTime}`);
+
+    let bookingState = "UPCOMING";
+
+    if (now >= bookingStart && now <= bookingEnd) {
+      bookingState = "ACTIVE";
+    } else if (now > bookingEnd) {
+      bookingState = "EXPIRED";
+    }
+
+    if (isCancelled) {
+      bookingState = "CANCELLED";
+    }
+
 
     div.innerHTML += `
       <div class="col-md-4 mb-3">
         <div class="card p-3 shadow-sm rounded-4">
           <h6>${b.locationName}</h6>
-          <span class="badge ${isCancelled ? "bg-secondary" : "bg-success"} mb-2">
-            ${isCancelled ? "Cancelled" : "Booked"}
+          <span class="badge mb-2 ${
+            bookingState === "ACTIVE" ? "bg-success" :
+            bookingState === "UPCOMING" ? "bg-warning text-dark" :
+            bookingState === "EXPIRED" ? "bg-dark" :
+            "bg-danger"
+          }">
+            ${
+              bookingState === "ACTIVE" ? "Active" :
+              bookingState === "UPCOMING" ? "Upcoming" :
+              bookingState === "EXPIRED" ? "Expired" :
+              "Cancelled"
+            }
           </span>
+
+
           <p><b>Date:</b> ${b.bookingDate}</p>
           <p><b>Time:</b> ${b.startTime} - ${b.endTime}</p>
 
           <div class="d-flex gap-2 mt-2">
-            <button class="btn btn-outline-primary btn-sm w-50"
-              ${isCancelled ? "disabled" : ""}
-              onclick="openTicket('${b._id}')">
-              Generate Ticket
-            </button>
+            ${
+              bookingState === "ACTIVE" || bookingState === "UPCOMING"
+                ? `<button class="btn btn-outline-primary btn-sm w-50"
+                    onclick="openTicket('${b._id}')">
+                    Generate Ticket
+                  </button>`
+                : `<button class="btn btn-outline-secondary btn-sm w-50" disabled>
+                    Ticket Unavailable
+                  </button>`
+            }
+
 
             ${
               !isCancelled
