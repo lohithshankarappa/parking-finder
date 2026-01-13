@@ -5,14 +5,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background: #f5f7fb;
+    }
+    .stat-card {
+      border-radius: 18px;
+    }
+    canvas {
+      max-height: 260px;
+    }
+  </style>
 </head>
 
 <body onload="loadAdmin()" class="bg-light">
 
 <!-- NAVBAR -->
 <nav class="navbar bg-white px-4 shadow-sm">
-  <span class="fw-bold text-primary">🚗 ParkEasy Admin</span>
+  <span class="fw-bold text-primary fs-5">🚗 ParkEasy Admin</span>
   <div>
     <span id="userName" class="me-3 text-muted"></span>
     <a href="home.html" class="btn btn-outline-primary btn-sm rounded-pill">Home</a>
@@ -22,55 +38,136 @@
 
 <div class="container mt-4">
 
-  <!-- ADD LOCATION -->
-  <div class="card p-4 mb-4 shadow-sm rounded-4">
-    <h5 class="mb-3">List New Parking Place</h5>
+  <!-- ================= STATS ================= -->
+  <div class="row g-4 mb-4">
 
-    <div class="row g-2">
-      <div class="col-md-3">
-        <input id="lname" class="form-control" placeholder="Name">
-      </div>
-      <div class="col-md-3">
-        <input id="larea" class="form-control" placeholder="Area">
-      </div>
-      <div class="col-md-3">
-        <input id="addr" class="form-control" placeholder="Address">
-      </div>
-      <div class="col-md-3">
-        <input id="slots" type="number" class="form-control" placeholder="Slots">
+    <!-- TOTAL EARNINGS -->
+    <div class="col-md-4">
+      <div class="card stat-card p-4 shadow-sm">
+        <small class="text-muted">Total Earnings</small>
+        <h2 class="fw-bold text-success mt-2" id="totalEarnings">₹0</h2>
       </div>
     </div>
 
-    <button onclick="addLocation()" class="btn btn-success rounded-pill mt-3 w-100">
-      + Add Parking Location
-    </button>
+    <!-- CHART -->
+    <div class="col-md-8">
+      <div class="card stat-card p-4 shadow-sm">
+        <small class="text-muted mb-3 d-block">Earnings by Location</small>
+        <canvas id="earningsChart"></canvas>
+      </div>
+    </div>
+
   </div>
 
-  <!-- MY PLACES -->
-  <h5 class="mb-3">My Parking Locations</h5>
-  <div class="row" id="myPlaces"></div>
+  <!-- ================= ADD LOCATION ================= -->
+  <div class="card p-4 mb-4 shadow-sm rounded-4 border-0">
+    <h5 class="mb-3">➕ List New Parking Place</h5>
+
+    <div class="row g-3 align-items-start">
+
+      <!-- IMAGE PREVIEW -->
+      <div class="col-md-4 text-center">
+        <img id="imagePreview"
+             class="img-fluid rounded-4 border d-none"
+             style="height:180px;object-fit:cover;width:100%">
+      </div>
+
+      <!-- FORM -->
+      <div class="col-md-8">
+        <div class="row g-2">
+
+          <div class="col-md-6">
+            <input id="lname" class="form-control" placeholder="Parking Name">
+          </div>
+
+          <div class="col-md-6">
+            <input id="larea" class="form-control" placeholder="Area">
+          </div>
+
+          <div class="col-md-12">
+            <input id="addr" class="form-control" placeholder="Full Address">
+          </div>
+
+          <div class="col-md-6">
+            <input id="slots" type="number" class="form-control" placeholder="Total Slots">
+          </div>
+
+          <div class="col-md-6">
+            <input id="rate" type="number" class="form-control" placeholder="Hourly Rate (₹)">
+          </div>
+
+          <div class="col-md-12">
+            <input id="placeImage" type="file" class="form-control" accept="image/*">
+          </div>
+
+        </div>
+
+        <button onclick="addLocation()"
+                class="btn btn-success rounded-pill mt-3 w-100">
+          🚗 Add Parking Location
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MY PLACES ================= -->
+  <h5 class="mb-3">📍 My Parking Locations</h5>
+  <div class="row g-3" id="myPlaces"></div>
 
 </div>
 
-<!-- EDIT MODAL -->
+<!-- ================= EDIT MODAL ================= -->
 <div class="modal fade" id="editModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-4 rounded-4">
-      <h5>Edit Parking Location</h5>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content p-4 rounded-4 border-0">
 
-      <input id="editName" class="form-control mb-2" placeholder="Name">
-      <input id="editArea" class="form-control mb-2" placeholder="Area">
-      <input id="editAddress" class="form-control mb-2" placeholder="Address & Type of Parking">
-      <input id="editSlots" type="number" class="form-control mb-3" placeholder="Total Slots">
+      <h5 class="mb-3">✏ Edit Parking Location</h5>
 
-      <button onclick="saveEdit()" class="btn btn-primary rounded-pill w-100">
-        Save Changes
+      <img id="editPreview"
+           class="img-fluid rounded-4 mb-3 d-none"
+           style="height:180px;object-fit:cover;width:100%">
+
+      <input id="editImage" type="file" class="form-control mb-3" accept="image/*">
+
+      <div class="row g-2">
+
+        <div class="col-md-6">
+          <input id="editName" class="form-control" placeholder="Parking Name">
+        </div>
+
+        <div class="col-md-6">
+          <input id="editArea" class="form-control" placeholder="Area">
+        </div>
+
+        <div class="col-md-12">
+          <input id="editAddress" class="form-control" placeholder="Full Address">
+        </div>
+
+        <div class="col-md-6">
+          <input id="editSlots" type="number" class="form-control" placeholder="Total Slots">
+        </div>
+
+        <div class="col-md-6">
+          <input id="editRate" type="number" class="form-control" placeholder="Hourly Rate (₹)">
+        </div>
+
+      </div>
+
+      <button onclick="saveEdit()"
+              class="btn btn-primary rounded-pill w-100 mt-3">
+        💾 Save Changes
       </button>
+
     </div>
   </div>
 </div>
 
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Main Script -->
 <script src="script.js"></script>
+
 </body>
 </html>

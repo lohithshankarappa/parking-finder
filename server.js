@@ -10,11 +10,15 @@ app.use(express.json());
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
 
 // API routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/locations", require("./routes/locations"));
-app.use("/api/bookings", require("./routes/bookings")); // ✅ FIX
+app.use("/api/bookings", require("./routes/bookings")); 
+app.use("/api/admin", require("./routes/admin"));
+
 
 // Default page
 app.get("/", (req, res) => {

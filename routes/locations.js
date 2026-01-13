@@ -4,6 +4,10 @@ const Booking = require("../models/Booking");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
 /* =======================
    BOOKING NUMBER GENERATOR
 ======================= */
@@ -13,26 +17,40 @@ function generateBookingNumber() {
 }
 
 /* =======================
-   ADD LOCATION (OWNER)
+   MULTER CONFIG
 ======================= */
-r.post("/", auth, async (req, res) => {
-  try {
-    const { name, area, address, totalSlots } = req.body;
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, "public/uploads"),
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname))
+});
 
-    if (!name || !area || !address || !totalSlots) {
+const upload = multer({ storage });
+
+/* =======================
+   ADD LOCATION (ADMIN)
+======================= */
+r.post("/", auth, upload.single("image"), async (req, res) => {
+  try {
+    const { name, area, address, totalSlots, hourlyRate } = req.body;
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!name || !area || !address || !totalSlots || !hourlyRate || !image) {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    const loc = await Location.create({
+    const location = await Location.create({
       name,
       area,
       address,
-      totalSlots,
-      availableSlots: totalSlots,
+      image,
+      totalSlots: Number(totalSlots),
+      availableSlots: Number(totalSlots),
+      hourlyRate: Number(hourlyRate),
       owner: req.user.id
     });
 
-    res.json(loc);
+    res.json(location);
   } catch (err) {
     console.error("Add location error:", err);
     res.status(500).json({ message: "Server error" });
@@ -51,7 +69,7 @@ r.get("/", auth, async (req, res) => {
 
     const locations = await Location.find(filter);
     res.json(locations);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -63,17 +81,17 @@ r.get("/my", auth, async (req, res) => {
   try {
     const locations = await Location.find({ owner: req.user.id });
     res.json(locations);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* =======================
-   UPDATE LOCATION (OWNER)
+   UPDATE LOCATION
 ======================= */
-r.put("/:id", auth, async (req, res) => {
+r.put("/:id", auth, upload.single("image"), async (req, res) => {
   try {
-    const { name, area, address, totalSlots } = req.body;
+    const { name, area, address, totalSlots, hourlyRate } = req.body;
 
     const loc = await Location.findOne({
       _id: req.params.id,
@@ -82,14 +100,20 @@ r.put("/:id", auth, async (req, res) => {
 
     if (!loc) return res.sendStatus(404);
 
-    // Adjust available slots safely
-    const diff = totalSlots - loc.totalSlots;
+    const diff = Number(totalSlots) - loc.totalSlots;
     loc.availableSlots = Math.max(0, loc.availableSlots + diff);
 
     loc.name = name;
     loc.area = area;
     loc.address = address;
-    loc.totalSlots = totalSlots;
+    loc.totalSlots = Number(totalSlots);
+    loc.hourlyRate = Number(hourlyRate);
+
+    if (req.file) {
+      const oldPath = path.join(__dirname, "..", "public", loc.image || "");
+      if (loc.image && fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      loc.image = `/uploads/${req.file.filename}`;
+    }
 
     await loc.save();
     res.json({ message: "Location updated" });
@@ -100,23 +124,31 @@ r.put("/:id", auth, async (req, res) => {
 });
 
 /* =======================
-   DELETE LOCATION (OWNER)
+   DELETE LOCATION
 ======================= */
 r.delete("/:id", auth, async (req, res) => {
   try {
-    await Location.deleteOne({
+    const loc = await Location.findOne({
       _id: req.params.id,
       owner: req.user.id
     });
 
+    if (!loc) return res.sendStatus(404);
+
+    if (loc.image) {
+      const filePath = path.join(__dirname, "..", "public", loc.image);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    await loc.deleteOne();
     res.json({ message: "Location deleted" });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /* =======================
-   BOOK SLOT (WITH TICKET)
+   BOOK SLOT (PRICE CALC)
 ======================= */
 r.post("/book/:id", auth, async (req, res) => {
   try {
@@ -136,19 +168,36 @@ r.post("/book/:id", auth, async (req, res) => {
       return res.status(400).json({ message: "No slots available" });
     }
 
+    const startHour = parseInt(startTime.split(":")[0]);
+    const endHour = parseInt(endTime.split(":")[0]);
+    const duration = endHour - startHour;
+
+    if (duration <= 0) {
+      return res.status(400).json({ message: "Invalid duration" });
+    }
+
+    const totalAmount = duration * location.hourlyRate;
     const user = await User.findById(req.user.id);
 
     await Booking.create({
       bookingNumber: generateBookingNumber(),
-      userId: user._id,
+      userId: req.user.id,
       userName: user.name,
+
       locationId: location._id,
       locationName: location.name,
       area: location.area,
       address: location.address,
+      image: location.image,
+
       bookingDate,
       startTime,
       endTime,
+      duration,
+
+      hourlyRate: location.hourlyRate,
+      totalAmount,
+
       status: "Booked"
     });
 

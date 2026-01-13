@@ -228,6 +228,7 @@ body {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg rounded-4">
 
+      <!-- HEADER -->
       <div class="modal-header border-0 pb-0">
         <div>
           <h5 class="modal-title fw-semibold">🎟 Parking Ticket</h5>
@@ -236,8 +237,10 @@ body {
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
+      <!-- BODY -->
       <div class="modal-body pt-3">
 
+        <!-- LOCATION -->
         <div class="text-center mb-3">
           <h5 id="ticketLocation" class="fw-semibold mb-1"></h5>
           <p id="ticketAddress" class="text-muted small mb-0"></p>
@@ -245,6 +248,7 @@ body {
 
         <hr>
 
+        <!-- DATE & TIME -->
         <div class="row text-center mb-3">
           <div class="col">
             <small class="text-muted">DATE</small>
@@ -256,18 +260,36 @@ body {
           </div>
         </div>
 
-        <div class="bg-light rounded-3 p-3 text-center mb-3">
-          <small class="text-muted">BOOKING ID</small>
-          <div id="ticketNumber" class="fw-semibold mt-1"
-               style="letter-spacing:0.6px;font-size:.95rem"></div>
+        <!-- RATE & TOTAL -->
+        <div class="d-flex justify-content-between text-center mb-3">
+          <div class="flex-fill">
+            <small class="text-muted">RATE / HR</small>
+            <div id="ticketRate" class="fw-semibold"></div>
+          </div>
+          <div class="flex-fill">
+            <small class="text-muted">TOTAL AMOUNT</small>
+            <div id="ticketTotal" class="fw-semibold text-success"></div>
+          </div>
         </div>
 
+        <!-- BOOKING ID -->
+        <div class="bg-light rounded-3 p-3 text-center mb-3">
+          <small class="text-muted">BOOKING ID</small>
+          <div
+            id="ticketNumber"
+            class="fw-semibold mt-1"
+            style="letter-spacing:0.6px;font-size:.95rem">
+          </div>
+        </div>
+
+        <!-- QR CODE -->
         <div class="d-flex justify-content-center">
           <div id="qrBox" class="p-3 bg-white rounded-4 shadow-sm border"></div>
         </div>
 
       </div>
 
+      <!-- FOOTER -->
       <div class="modal-footer border-0">
         <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
           Close
@@ -277,6 +299,7 @@ body {
     </div>
   </div>
 </div>
+
 
 <!-- ================= CONTACT ================= -->
 <section id="contact" class="mb-5">
