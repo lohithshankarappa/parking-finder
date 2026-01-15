@@ -479,7 +479,15 @@ async function loadMyPlaces() {
           <p><b>${p.availableSlots}</b> / ${p.totalSlots} slots</p>
 
           <button class="btn btn-outline-primary btn-sm w-100 mb-2"
-            onclick=onclick="openEdit('${p._id}','${p.name}','${p.area}','${p.address}',${p.totalSlots},${p.hourlyRate},'${p.image}')">
+            onclick="openEdit(
+              '${p._id}',
+              '${p.name}',
+              '${p.area}',
+              '${p.address}',
+              ${p.totalSlots},
+              ${p.hourlyRate},
+              '${p.image}'
+            )">
             Edit
           </button>
 
