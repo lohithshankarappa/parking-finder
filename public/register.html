@@ -138,22 +138,23 @@
         <!-- NAME -->
         <input
           id="name"
+          type="text"
           class="form-control mb-3"
           placeholder="Full Name"
         >
 
         <!-- EMAIL -->
         <input
-          id="re"
+          id="email"
           type="email"
           class="form-control mb-3"
           placeholder="Email"
         >
 
-        <!-- PASSWORD WITH EYE -->
+        <!-- PASSWORD -->
         <div class="position-relative mb-3">
           <input
-            id="rp"
+            id="password"
             type="password"
             class="form-control"
             placeholder="Password"
@@ -191,7 +192,7 @@
 <!-- PASSWORD TOGGLE -->
 <script>
   function togglePassword() {
-    const pwd = document.getElementById("rp");
+    const pwd = document.getElementById("password");
     const icon = event.target;
 
     if (pwd.type === "password") {

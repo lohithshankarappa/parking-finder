@@ -96,11 +96,15 @@ async function loadUser() {
 
 /* ================= PAGE LOAD ================= */
 function load() {
-  requireAuth();
-  loadUser();
-  loadLocations();
-  loadMyBookings();
+  // Only protect pages that actually need login
+  if (document.getElementById("myBookings")) {
+    requireAuth();
+    loadUser();
+    loadLocations();
+    loadMyBookings();
+  }
 }
+
 
 /* ================= LOCATIONS ================= */
 async function loadLocations() {
@@ -227,6 +231,36 @@ async function book(id) {
   loadMyBookings();
 }
 
+/* ================= BOOKINGS FILTER ================= */
+
+let currentBookingFilter = "all";
+
+
+function setBookingFilter(filter) {
+  currentBookingFilter = filter;
+
+  document.querySelectorAll("[id^='filter-']").forEach(btn =>
+    btn.classList.remove("active")
+  );
+
+  document.getElementById(`filter-${filter}`)?.classList.add("active");
+
+  loadMyBookings();
+}
+
+function getBookingCategory(b) {
+  const now = new Date();
+  const start = new Date(`${b.bookingDate}T${b.startTime}`);
+  const end = new Date(`${b.bookingDate}T${b.endTime}`);
+
+  if (b.status === "Cancelled") return "cancelled";
+  if (b.status === "Finished" || end < now) return "expired";
+  if (start <= now && end >= now) return "active";
+  return "upcoming";
+}
+
+
+
 /* ================= MY BOOKINGS ================= */
 async function loadMyBookings() {
   const div = document.getElementById("myBookings");
@@ -241,59 +275,69 @@ async function loadMyBookings() {
   const bookings = await res.json();
   div.innerHTML = "";
 
-  if (!bookings.length) {
-    div.innerHTML = "<p class='text-muted'>No bookings yet</p>";
+  const filtered =
+    currentBookingFilter === "all"
+      ? bookings
+      : bookings.filter(
+          b => getBookingCategory(b) === currentBookingFilter
+        );
+
+
+  if (!filtered.length) {
+    div.innerHTML =
+      "<p class='text-muted'>No bookings in this category</p>";
     return;
   }
 
-  bookings.forEach(b => {
+  filtered.forEach(b => {
+    const category = getBookingCategory(b);
+
     div.innerHTML += `
       <div class="col-md-4">
         <div class="card h-100 overflow-hidden">
 
-          <!-- IMAGE -->
-          <img src="${b.image}" class="w-100"
+          <img src="${b.image}"
+               class="w-100"
                style="height:160px;object-fit:cover">
 
           <div class="p-3">
-
-            <!-- LOCATION -->
             <h6 class="fw-semibold mb-1">${b.locationName}</h6>
             <small class="fw-semibold">${b.area}</small>
             <p class="small text-muted mb-2">${b.address}</p>
 
-            <!-- DATE & TIME -->
             <p class="small mb-2">
               <b>Date:</b> ${formatDateDDMMYYYY(b.bookingDate)}<br>
               <b>Time:</b> ${formatTimeAMPM(b.startTime)} –
               ${formatTimeAMPM(b.endTime)}
             </p>
 
-            <!-- PRICE INFO -->
             <p class="small mb-2">
               <b>Rate:</b> ₹${b.hourlyRate}/hr<br>
               <b>Duration:</b> ${b.duration} hr(s)<br>
               <b>Total:</b> ₹${b.totalAmount}
             </p>
 
-            <!-- STATUS BADGE -->
             <span class="badge mb-2 ${
-              b.status === "Booked" ? "bg-success" :
-              b.status === "FINISHED" ? "bg-secondary" :
+              category === "active" ? "bg-success" :
+              category === "upcoming" ? "bg-primary" :
+              category === "expired" ? "bg-secondary" :
               "bg-danger"
             }">
-              ${b.status}
+              ${category.toUpperCase()}
             </span>
 
-            <!-- ACTIONS -->
             <div class="d-flex gap-2 mt-2">
-              <button class="btn btn-outline-primary btn-sm w-50"
-                onclick="openTicket('${b._id}')">
+              <button class="btn btn-outline-primary btn-sm w-50
+                      ${category === "expired" || category === "cancelled" ? "disabled" : ""}"
+                      ${category === "expired" || category === "cancelled"
+                        ? "disabled aria-disabled='true'"
+                        : `onclick="openTicket('${b._id}')"`}>
                 Ticket
               </button>
 
+
               ${
-                b.status === "Booked"
+                category === "upcoming"
                   ? `<button class="btn btn-outline-danger btn-sm w-50"
                       onclick="confirmCancel('${b._id}')">
                       Cancel
@@ -301,7 +345,6 @@ async function loadMyBookings() {
                   : ""
               }
             </div>
-
           </div>
         </div>
       </div>
@@ -311,10 +354,19 @@ async function loadMyBookings() {
 
 
 
+
+
 /* ================= CANCEL ================= */
+let cancelBookingId = null;
+
 function confirmCancel(id) {
-  if (confirm("Cancel booking?")) cancelBooking(id);
+  cancelBookingId = id;
+  const modal = new bootstrap.Modal(
+    document.getElementById("cancelModal")
+  );
+  modal.show();
 }
+
 
 async function cancelBooking(id) {
   const res = await fetch(`${API}/bookings/cancel/${id}`, {
@@ -698,6 +750,49 @@ async function loadAdminStats() {
     }
   });
 }
+
+document.getElementById("confirmCancelBtn")?.addEventListener("click", () => {
+  if (!cancelBookingId) return;
+
+  cancelBooking(cancelBookingId);
+  cancelBookingId = null;
+
+  bootstrap.Modal.getInstance(
+    document.getElementById("cancelModal")
+  ).hide();
+});
+
+async function register() {
+  const name = document.getElementById("name")?.value.trim();
+  const email = document.getElementById("email")?.value.trim();
+  const password = document.getElementById("password")?.value.trim();
+
+  if (!name || !email || !password) {
+    showToast("error", "Fill all fields");
+    return;
+  }
+
+  const res = await fetch(API + "/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    showToast("error", data.message || "Registration failed");
+    return;
+  }
+
+  showToast("success", "Account created successfully");
+
+  setTimeout(() => {
+    window.location.href = "login.html";
+  }, 800);
+}
+
+
 
 
 
