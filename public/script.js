@@ -12,7 +12,6 @@ function formatTimeAMPM(timeStr) {
   return `${hours}:${String(minutes).padStart(2, "0")} ${ampm}`;
 }
 
-
 const API = "/api";
 
 /* ================= TOAST ================= */
@@ -104,7 +103,6 @@ function load() {
     loadMyBookings();
   }
 }
-
 
 /* ================= LOCATIONS ================= */
 async function loadLocations() {
@@ -201,7 +199,6 @@ async function loadLocations() {
   document.querySelectorAll("input[type='date']").forEach(d => d.min = today);
 }
 
-
 /* ================= BOOK SLOT ================= */
 async function book(id) {
   const bookingDate = document.getElementById(`date-${id}`).value;
@@ -235,7 +232,6 @@ async function book(id) {
 
 let currentBookingFilter = "all";
 
-
 function setBookingFilter(filter) {
   currentBookingFilter = filter;
 
@@ -258,8 +254,6 @@ function getBookingCategory(b) {
   if (start <= now && end >= now) return "active";
   return "upcoming";
 }
-
-
 
 /* ================= MY BOOKINGS ================= */
 async function loadMyBookings() {
@@ -323,7 +317,7 @@ async function loadMyBookings() {
               category === "expired" ? "bg-secondary" :
               "bg-danger"
             }">
-              ${category.toUpperCase()}
+               ${category === "expired" ? "FINISHED" : category.toUpperCase()}
             </span>
 
             <div class="d-flex gap-2 mt-2">
@@ -337,13 +331,14 @@ async function loadMyBookings() {
 
 
               ${
-                category === "upcoming"
+                category !== "expired" && category !== "cancelled"
                   ? `<button class="btn btn-outline-danger btn-sm w-50"
                       onclick="confirmCancel('${b._id}')">
                       Cancel
                     </button>`
                   : ""
               }
+
             </div>
           </div>
         </div>
@@ -351,10 +346,6 @@ async function loadMyBookings() {
     `;
   });
 }
-
-
-
-
 
 /* ================= CANCEL ================= */
 let cancelBookingId = null;
@@ -598,8 +589,6 @@ function openEdit(id, name, area, address, slots, rate, image) {
   modal.show();
 }
 
-
-
 async function saveEdit() {
   const fd = new FormData();
   fd.append("name", editName.value);
@@ -621,7 +610,6 @@ async function saveEdit() {
   bootstrap.Modal.getInstance(editModal).hide();
   loadMyPlaces();
 }
-
 
 /* =====================================================
    ADMIN DELETE
